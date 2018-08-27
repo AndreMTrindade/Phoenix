@@ -67,7 +67,6 @@ int _tmain(int argc, LPTSTR argv[])
 	WaitForSingleObject(THREAD1, INFINITE);
 }
 
-
 void WINAPI ClientRequest(void * dados)
 {
 	ControlPlays* shared = (ControlPlays*)dados;
@@ -80,7 +79,6 @@ void WINAPI ClientRequest(void * dados)
 	while (1)
 	{
 		_tprintf(TEXT("Esperando por clientes:\n"));
-		WaitForSingleObject(SEMReviceMensages, INFINITE);
 		ReadClientRequest(&play, shared->data);
 		if (play.action == 1)
 		{
@@ -93,7 +91,6 @@ void WINAPI ClientRequest(void * dados)
 			last->p = newc;
 			last = newc;
 		}
-		ReleaseSemaphore(SEMSendMessages, 1, NULL);
 	}
 }
 

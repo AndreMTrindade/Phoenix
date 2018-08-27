@@ -13,16 +13,15 @@ TCHAR SMClientRequest[] = TEXT("MEM_P");
 TCHAR SMShareSkeleton[] = TEXT("MEM_P22");
 TCHAR EVENTCliente2GateWay[] = TEXT("EV1");
 
-HANDLE SEMSendInitialConf = CreateSemaphore(NULL, 1, BUFFERSIZE, TEXT("SEMSendInitialConf"));
-HANDLE SEMReciveInitialData = CreateSemaphore(NULL, 0, BUFFERSIZE, TEXT("SEMReciveInitialData"));
+HANDLE MUTEXSKELETON = CreateMutex(NULL, FALSE, TEXT("MUTEXT1"));
+HANDLE MUTEXTPLAYSWERITE = CreateMutex(NULL, FALSE, TEXT("MUTEX2"));
 
-HANDLE SEMReviceMensages = CreateSemaphore(NULL, 0, BUFFERSIZE, TEXT("SEM1"));
-HANDLE SEMSendMessages = CreateSemaphore(NULL, BUFFERSIZE, BUFFERSIZE, TEXT("SEM2"));
-
-HANDLE SEMMessages = CreateMutex(NULL, FALSE, TEXT("M2"));
-HANDLE MUTEXTSKELETON = CreateMutex(NULL, FALSE, TEXT("M1"));
-
+HANDLE EVEMTWRITESKELETON = CreateEvent(NULL, FALSE, FALSE, TEXT("EVENT1"));
 HANDLE EVENTCHANGESKELETON = CreateEvent(NULL, FALSE, FALSE, EVENTCliente2GateWay);
+
+HANDLE SEMPLAY = CreateSemaphore(NULL, 0, 400, TEXT("SEMAFORO1"));
+HANDLE SEMPLAYSFREE = CreateSemaphore(NULL, 400, 400, TEXT("SEMAFORO2"));
+
 
 void reset()
 {
@@ -32,26 +31,28 @@ void reset()
 void WriteClientRequest(PlaysData *shared, Play *newClient)
 {
 	//mutex
-	WaitForSingleObject(SEMMessages, INFINITE);
+	WaitForSingleObject(SEMPLAYSFREE, INFINITE);
+	WaitForSingleObject(MUTEXTPLAYSWERITE, INFINITE);
 	CopyMemory(shared, newClient, sizeof(Client));
 	in = (in++) % BUFFERSIZE;
-	ReleaseMutex(SEMMessages);
-
+	ReleaseSemaphore(SEMPLAY, 1, NULL);
+	ReleaseMutex(MUTEXTPLAYSWERITE);
 	//mutex
 }
 
 void ReadClientRequest(Play * newClient, PlaysData *shared)
 {
 	//fechar mutext
+	WaitForSingleObject(SEMPLAY, INFINITE);
 	CopyMemory(newClient, shared, sizeof(Client));
 	out = (out++) % BUFFERSIZE;
-
+	ReleaseSemaphore(SEMPLAYSFREE, 1, NULL);
 	//abrir mutex
 }
 
 void ReadGameData(GameData *shared, GameData *newSkeleton) {
+	WaitForSingleObject(MUTEXSKELETON, INFINITE);
 	CopyMemory(shared, newSkeleton, sizeof(Client));
-	in = (in++) % BUFFERSIZE;
 }
 
 void WriteGameData(GameData *newSkeleton, GameData *shared) {
@@ -61,28 +62,27 @@ void WriteGameData(GameData *newSkeleton, GameData *shared) {
 
 void WriteSkeleton(GameData *shared, Skeleton *newSkeleton) {
 	int i;
-	WaitForSingleObject(MUTEXTSKELETON, INFINITE);
+	WaitForSingleObject(MUTEXSKELETON, INFINITE);
 	for (i = 0; i < shared->nSkeleton; i++)
 	{
 		if (shared->skeletons->id == newSkeleton->id)
 		{
 			CopyMemory(&shared->skeletons[i], newSkeleton, sizeof(Skeleton));
-			ReleaseMutex(MUTEXTSKELETON);
-			SetEvent(EVENTCHANGESKELETON);
+			ReleaseMutex(MUTEXSKELETON);
+			SetEvent(EVEMTWRITESKELETON);
 			return;
 		}
 	}
 
 	shared->nSkeleton++;
 	CopyMemory(&shared->skeletons[shared->nSkeleton], newSkeleton, sizeof(Skeleton));
-
-	ReleaseMutex(MUTEXTSKELETON);
-	SetEvent(EVENTCHANGESKELETON);
+	ReleaseMutex(MUTEXSKELETON);
+	SetEvent(EVEMTWRITESKELETON);
 }
 
 void RemoveSkeleton(GameData *shared, Skeleton *newSkeleton) {
 	int i;
-	WaitForSingleObject(MUTEXTSKELETON, INFINITE);
+	WaitForSingleObject(MUTEXSKELETON, INFINITE);
 	for (i = 0; i < shared->nSkeleton; i++)
 	{
 		if (shared->skeletons->id == newSkeleton->id)
@@ -94,8 +94,8 @@ void RemoveSkeleton(GameData *shared, Skeleton *newSkeleton) {
 		}
 	}
 
-	ReleaseMutex(MUTEXTSKELETON);
-	SetEvent(EVENTCHANGESKELETON);
+	ReleaseMutex(MUTEXSKELETON);
+	SetEvent(EVEMTWRITESKELETON);
 
 }
 
@@ -125,13 +125,13 @@ lim_s_y_ret = retangulo.canto_se.y + retangulo.altura;
 
 if (lim_i_x_outro >= lim_i_x_ret && lim_s_x_outro <= lim_s_x_ret && lim_i_y_outro >= lim_i_y_ret && lim_s_y_outro <= lim_s_y_ret)
 {
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return outro;
 }
 
 if (lim_i_x_ret >= lim_i_x_outro && lim_s_x_ret <= lim_s_x_outro && lim_i_y_ret >= lim_i_y_outro && lim_s_y_ret <= lim_s_y_outro)
 {
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return outro;
 }
 
@@ -139,7 +139,7 @@ x = retangulo.canto_se.x;
 y = retangulo.canto_se.y;
 if (x >= lim_i_x_outro && x <= lim_s_x_outro && y >= lim_i_y_outro && y <= lim_s_y_outro)
 {
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return outro;
 }
 
@@ -147,7 +147,7 @@ x = retangulo.canto_se.x + retangulo.comprimento;
 y = retangulo.canto_se.y + retangulo.altura;
 if (x >= lim_i_x_outro && x <= lim_s_x_outro && y >= lim_i_y_outro && y <= lim_s_y_outro)
 {
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return outro;
 }
 
@@ -155,7 +155,7 @@ x = retangulo.canto_se.x;
 y = retangulo.canto_se.y + retangulo.altura;
 if (x >= lim_i_x_outro && x <= lim_s_x_outro && y >= lim_i_y_outro && y <= lim_s_y_outro)
 {
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return outro;
 }
 
@@ -163,12 +163,12 @@ x = retangulo.canto_se.x + retangulo.comprimento;
 y = retangulo.canto_se.y;
 if (x >= lim_i_x_outro && x <= lim_s_x_outro && y >= lim_i_y_outro && y <= lim_s_y_outro)
 {
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return outro;
 }
 }
 }
-ReleaseMutex(h_mutex_posicoes);
+ReleaseMutex(MUTEXSKELETON);
 return NULL;
 }
 

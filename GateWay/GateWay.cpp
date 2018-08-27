@@ -119,6 +119,7 @@ DWORD WINAPI ClientRequest(LPVOID param)
 	HANDLE hPipe = (HANDLE)param;
 	HANDLE IOReady;
 	OVERLAPPED ov;
+	TCHAR name[50] = TEXT("");
 	Play play;
 	DWORD n;
 	IOReady = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -132,6 +133,14 @@ DWORD WINAPI ClientRequest(LPVOID param)
 		_tprintf(TEXT("Nome:  %s acao: %d\n"), play.user, play.action);
 		WaitForSingleObject(IOReady, INFINITE);
 		GetOverlappedResult(hPipe, &ov, &n, FALSE);
+
+		if (_tcscmp(name, TEXT("")) == 0)
+			_tcscpy(name, play.user);
+
+		if (_tcscmp(name, play.user) == 0)
+		{
+			WriteClientRequest(plyasdata.data, &play); 
+		}
 	}
 
 
