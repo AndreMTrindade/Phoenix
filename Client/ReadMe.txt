@@ -1,5 +1,5 @@
 ========================================================================
-    CONSOLE APPLICATION : Client Project Overview
+    WIN32 APPLICATION : Client Project Overview
 ========================================================================
 
 AppWizard has created this Client application for you.
@@ -23,6 +23,28 @@ Client.vcxproj.filters
 
 Client.cpp
     This is the main application source file.
+
+/////////////////////////////////////////////////////////////////////////////
+AppWizard has created the following resources:
+
+Client.rc
+    This is a listing of all of the Microsoft Windows resources that the
+    program uses.  It includes the icons, bitmaps, and cursors that are stored
+    in the RES subdirectory.  This file can be directly edited in Microsoft
+    Visual C++.
+
+Resource.h
+    This is the standard header file, which defines new resource IDs.
+    Microsoft Visual C++ reads and updates this file.
+
+Client.ico
+    This is an icon file, which is used as the application's icon (32x32).
+    This icon is included by the main resource file Client.rc.
+
+small.ico
+    This is an icon file, which contains a smaller version (16x16)
+    of the application's icon. This icon is included by the main resource
+    file Client.rc.
 
 /////////////////////////////////////////////////////////////////////////////
 Other standard files:

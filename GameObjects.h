@@ -89,6 +89,7 @@ typedef struct _Game{
 typedef struct GameData {
 	int nSkeleton;
 	Skeleton skeletons[200];
+	int gameStatus;
 }GameData;
 
 
@@ -114,10 +115,6 @@ typedef struct {
 	PlaysData *data;
 	int thread;
 }ControlPlays;
-
-
-
-
 
 
 

@@ -122,11 +122,12 @@ DWORD WINAPI ClientRequest(LPVOID param)
 	Play play;
 	DWORD n;
 	IOReady = CreateEvent(NULL, TRUE, FALSE, NULL);
-	ZeroMemory(&ov, sizeof(ov));
-	ResetEvent(IOReady);
-	ov.hEvent = IOReady;
+	
 
 	while (StartGame == 1) {
+		ZeroMemory(&ov, sizeof(ov));
+		ResetEvent(IOReady);
+		ov.hEvent = IOReady;
 		ReadFile(hPipe, &play, sizeof(Play), NULL, &ov);
 		_tprintf(TEXT("Nome:  %s acao: %d\n"), play.user, play.action);
 		WaitForSingleObject(IOReady, INFINITE);
