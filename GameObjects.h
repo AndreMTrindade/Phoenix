@@ -76,6 +76,16 @@ typedef struct Client
 } Client;
 
 
+typedef struct _Config {
+	int v_powerUp;
+	int v_shoots;
+	int v_bombs;
+	int nplayers;
+	int powerUpsTime;
+	int lives;
+	int shootRate;
+}Config;
+
 typedef struct _Game{
 	Invader *inv;
 	Defender *def;
@@ -83,8 +93,12 @@ typedef struct _Game{
 	Shot *shot;
 	Client *cli;
 	int MaxPlayers;
+	int startGame;
+	Config configuration;
 	struct _Game *p;
 }Game;
+
+
 
 typedef struct GameData {
 	int nSkeleton;
