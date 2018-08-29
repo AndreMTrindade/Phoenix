@@ -15,6 +15,8 @@ TCHAR EVENTCliente2GateWay[] = TEXT("EV1");
 
 HANDLE MUTEXSKELETON = CreateMutex(NULL, FALSE, TEXT("MUTEXT1"));
 HANDLE MUTEXTPLAYSWERITE = CreateMutex(NULL, FALSE, TEXT("MUTEX2"));
+HANDLE EVENTGATWAYON = CreateEvent(NULL, FALSE, FALSE, TEXT("EVENT2"));
+HANDLE EVEMTSERVERON = CreateEvent(NULL, FALSE, FALSE, TEXT("EVENT3"));
 
 HANDLE EVEMTWRITESKELETON = CreateEvent(NULL, FALSE, FALSE, TEXT("EVENT1"));
 HANDLE EVENTCHANGESKELETON = CreateEvent(NULL, FALSE, FALSE, EVENTCliente2GateWay);
@@ -33,7 +35,7 @@ void WriteClientRequest(PlaysData *shared, Play *newClient)
 	//mutex
 	WaitForSingleObject(SEMPLAYSFREE, INFINITE);
 	WaitForSingleObject(MUTEXTPLAYSWERITE, INFINITE);
-	CopyMemory(shared, newClient, sizeof(Client));
+	CopyMemory(shared, newClient, sizeof(Play));
 	in = (in++) % BUFFERSIZE;
 	ReleaseSemaphore(SEMPLAY, 1, NULL);
 	ReleaseMutex(MUTEXTPLAYSWERITE);
@@ -43,16 +45,18 @@ void WriteClientRequest(PlaysData *shared, Play *newClient)
 void ReadClientRequest(Play * newClient, PlaysData *shared)
 {
 	//fechar mutext
+	if (shared == NULL) return;
 	WaitForSingleObject(SEMPLAY, INFINITE);
-	CopyMemory(newClient, shared, sizeof(Client));
+	CopyMemory(newClient, shared, sizeof(Play));
 	out = (out++) % BUFFERSIZE;
 	ReleaseSemaphore(SEMPLAYSFREE, 1, NULL);
 	//abrir mutex
 }
 
 void ReadGameData(GameData *shared, GameData *newSkeleton) {
-	WaitForSingleObject(MUTEXSKELETON, INFINITE);
-	CopyMemory(shared, newSkeleton, sizeof(Client));
+	WaitForSingleObject(EVEMTWRITESKELETON, INFINITE);
+	CopyMemory(shared, newSkeleton, sizeof(GameData));
+	ReleaseMutex(MUTEXSKELETON);
 }
 
 void WriteGameData(GameData *newSkeleton, GameData *shared) {

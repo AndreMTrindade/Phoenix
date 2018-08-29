@@ -1,15 +1,7 @@
 #include "gameObjects.h"
+#include "Skeleton.h"
 
-Defender* CreateDefender(int width, int height, int lives)
-{
-	Defender *temp;
 
-	temp = (Defender*)malloc(sizeof(Defender));
-	temp->body = CreateSkeleton(5, 30, width, height);
-	temp->lives = lives;
-	temp->score = 0;
-	return temp;
-}
 
 Invader* CreateInvader(int x, int y, int type, int width, int height)
 {
@@ -127,14 +119,14 @@ bool CheckPossibleMove(Skeleton s, Game g)
 
 }
 
-Game* CreateGame(Invader *inv, Defender *def, PowerUp *pu, Shot *shot, Client *cli, int maxPlayers)
+Game CreateGame(Invader *inv, Defender *def, PowerUp *pu, Shot *shot, Client *cli, int maxPlayers)
 {
-	Game *g = (Game*)malloc(sizeof(Game));
-	g->inv = inv;
-	g->def = def;
-	g->pu = pu;
-	g->shot = shot;
-	g->cli = cli;
-	g->MaxPlayers = maxPlayers;
+	Game g;
+	g.inv = inv;
+	g.def = def;
+	g.pu = pu;
+	g.shot = shot;
+	g.cli = cli;
+	g.MaxPlayers = maxPlayers;
 	return g;
 }

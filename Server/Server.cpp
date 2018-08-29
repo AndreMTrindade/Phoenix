@@ -32,6 +32,8 @@ HWND playersIn;
 void WINAPI ClientRequest(void * dados);
 INT_PTR CALLBACK InitialConfiguration(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK StartGame(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+void WINAPI GameBody(void * dados);
+void InitialObjects();
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -139,10 +141,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
 	switch (message)
 	{
 	case WM_COMMAND:
 	{
+
 		int wmId = LOWORD(wParam);
 		// Parse the menu selections:
 		switch (wmId)
@@ -156,23 +160,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
+	
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 	}
 	break;
+	case WM_CREATE:
+		PAINTSTRUCT ps;
+		BeginPaint(hWnd, &ps);
+		// TODO: Add any drawing code that uses hdc here...
+		EndPaint(hWnd, &ps);
+		DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InitialConfiguration);
+
+		break;
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code that uses hdc here...
 		EndPaint(hWnd, &ps);
-		if (info == 0)
-		{
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_DIALOG1), hWnd, InitialConfiguration);
-			info = 1;
-
-		}
 	}
 	break;
 	case WM_DESTROY:
@@ -206,7 +213,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 void WINAPI ClientRequest(void * dados)
 {
-	ControlPlays* shared = (ControlPlays*)dados;
 	Play play;
 	Client *newc;
 	Client *last;
@@ -216,13 +222,16 @@ void WINAPI ClientRequest(void * dados)
 	while (1)
 	{
 		_tprintf(TEXT("Esperando por clientes:\n"));
-		ReadClientRequest(&play, shared->data);
+		ReadClientRequest(&play, playsData.data);
 		if (play.action == 1)
 		{
 			_tprintf(TEXT("Cliente: %s Acao: %d\n"), play.user, play.action);
 			_tcscat(play.user, TEXT("\n"));
+			_tcscpy(temp, TEXT("Cliente: "));
 			_tcscat(temp, play.user);
 			SetDlgItemText(playersIn, IDC_PLAYERS, temp);
+			RedrawWindow(playersIn, NULL, NULL, RDW_INVALIDATE);	
+			
 			newc = (Client*)malloc(sizeof(Client));
 			_tcscpy_s(newc->user, play.user);
 			ID++;
@@ -236,6 +245,7 @@ void WINAPI ClientRequest(void * dados)
 
 INT_PTR CALLBACK InitialConfiguration(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	TCHAR error[50] = TEXT("");
 	UNREFERENCED_PARAMETER(lParam);
 	switch (message)
 	{
@@ -310,12 +320,14 @@ INT_PTR CALLBACK InitialConfiguration(HWND hDlg, UINT message, WPARAM wParam, LP
 			gameData.data = (GameData*)MapViewOfFile(gameData.hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(GameData));
 			if (gameData.data == NULL)
 			{
-				_tprintf(TEXT("[SERVIDOR]: [ERRO] Mapear memória (%d)\n"), GetLastError());
+				//_tprintf(TEXT("[SERVIDOR]: [ERRO] Mapear memória (%d)\n"), GetLastError());
+				_stprintf(error,TEXT("[SERVIDOR]: [ERRO] Mapear memória (%d)"), GetLastError());
+				MessageBox(hDlg, error, TEXT("Erro"), ERROR_BAD_UNIT);
 				CloseHandle(gameData.hMapFile);
 				return -1;
 			}
 
-			playsData.hMapFile = CreateFileMapping(NULL, NULL, PAGE_READWRITE, 0, sizeof(Play) * 400, SHAREDMEMORYPLAYS);
+			playsData.hMapFile = CreateFileMapping(NULL, NULL, PAGE_READWRITE, 0, sizeof(Play) * MAXPLAYS, SHAREDMEMORYPLAYS);
 			if (playsData.hMapFile == NULL)
 			{
 				CloseHandle(gameData.hMapFile);
@@ -323,7 +335,7 @@ INT_PTR CALLBACK InitialConfiguration(HWND hDlg, UINT message, WPARAM wParam, LP
 				return -1;
 			}
 
-			playsData.data = (PlaysData*)MapViewOfFile(playsData.hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Play) * 400);
+			playsData.data = (PlaysData*)MapViewOfFile(playsData.hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Play) * MAXPLAYS);
 			if (playsData.hMapFile == NULL)
 			{
 				_tprintf(TEXT("[SERVIDOR]: [ERRO] Mapear memória (%d)\n"), GetLastError());
@@ -331,6 +343,7 @@ INT_PTR CALLBACK InitialConfiguration(HWND hDlg, UINT message, WPARAM wParam, LP
 				CloseHandle(playsData.hMapFile);
 				return -1;
 			}
+
 
 			lPlayers = (Client*)malloc(sizeof(Client));
 			lPlayers->PID = -1;
@@ -360,10 +373,49 @@ INT_PTR CALLBACK StartGame(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
 		{
-			EndDialog(hDlg, LOWORD(wParam));
+			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)GameBody, NULL, 0, NULL);
+			//EndDialog(hDlg, LOWORD(wParam));
 			return (INT_PTR)TRUE;
 		}
 		break;
 	}
 	return (INT_PTR)FALSE;
+}
+
+void WINAPI GameBody(void * dados)
+{
+	InitialObjects();
+}
+
+void InitialObjects() {
+	int i;
+	int x, y;
+	Defender *temp = NULL;
+	Defender *newd;
+	time_t t;
+
+	srand((unsigned)time(&t));
+
+	for (i = 0; i < game.configuration.nplayers; i++)
+	{
+		y = 30;
+		x = rand() % WHIDTH;
+
+		if (temp == NULL)
+		{
+			temp = CreateDefender(2, 2, 1, x, y);
+			temp->proxDefender = NULL;
+			newd = temp;
+		}
+		else {
+			temp = CreateDefender(2, 2, 1, x, y);
+			temp->proxDefender = NULL;
+			newd->proxDefender = temp;
+			newd = newd->proxDefender;
+		}
+		WriteSkeleton(gameData.data, &(temp->body));
+	}
+
+
+
 }

@@ -2,6 +2,10 @@
 #define GameObjects
 
 #include "Skeleton.h"
+#include "stdlib.h"
+
+#define WHIDTH 650
+#define HEIGHT 600
 
 #define BASIC 19785
 #define DODGE -34109
@@ -23,8 +27,7 @@ typedef struct Defender {
 	Skeleton body;
 	int score;
 	int lives;
-
-	struct Defender * proxDefender;
+	struct Defender *proxDefender;
 }Defender;
 
 /*
@@ -132,8 +135,6 @@ typedef struct {
 
 
 
-Defender* CreateDefender(int width, int height, int lives);
-
 Invader* CreateInvader(int x, int y, int type, int width, int height);
 
 PowerUp* CreatePowerUp(int x, int y, int type);
@@ -147,5 +148,17 @@ void MoveInvader(Invader *inv, int type);
 bool CheckPossibleMove(Skeleton s, Game g);
 
 Game* CreateGame(Invader *inv, Defender *def, PowerUp *pu, Shot *shot, Client *cli);
+
+
+Defender* CreateDefender(int width, int height, int lives, int x, int y)
+{
+	Defender *temp;
+
+	temp = (Defender*)malloc(sizeof(Defender));
+	temp->body = CreateSkeleton(x, y, width, height);
+	temp->lives = lives;
+	temp->score = 0;
+	return temp;
+}
 
 #endif

@@ -24,6 +24,8 @@ extern "C"
 	DLL_IMP_API HANDLE SEMPLAY;
 	DLL_IMP_API HANDLE SEMPLAYSFREE;
 
+	DLL_IMP_API HANDLE EVEMTSERVERON;
+	DLL_IMP_API HANDLE EVENTGATWAYON;
 
 	//Funções a serem exportadas/importadas
 	DLL_IMP_API void ReadClientRequest(Play *newClient, PlaysData *shared);

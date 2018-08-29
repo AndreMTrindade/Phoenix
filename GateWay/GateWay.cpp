@@ -37,6 +37,7 @@ int _tmain(int argc, LPTSTR argv[])
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
+	system("pause");
 	gamedata.hMapFile = CreateFileMapping(NULL, NULL, PAGE_READONLY, 0, sizeof(GameData), SHAREDMEMORYSKELETON);
 	if (gamedata.hMapFile == NULL)
 	{
@@ -76,6 +77,8 @@ int _tmain(int argc, LPTSTR argv[])
 	for (i = 0; i < BUFFERSIZE; i++)
 		lClients[i].thread = NULL;
 
+	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CurrentData, NULL, 0, NULL);
+
 	do
 	{
 		_tprintf(TEXT("[GATEWAY] Criar uma cópia do pipe '%s' (CreateNamedPipe)\n"), PIPE_NAME);
@@ -106,7 +109,6 @@ int _tmain(int argc, LPTSTR argv[])
 
 	} while (StartGame == 1);
 
-	HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)CurrentData, NULL, 0, NULL);
 
 
 	WaitForSingleObject(thread, INFINITE);
@@ -162,7 +164,6 @@ DWORD WINAPI CurrentData(LPVOID * param)
 
 	while (StartGame == 1)
 	{
-		WaitForSingleObject(SMShareSkeleton, INFINITE);
 		ReadGameData(gamedata.data, &newGameData);
 
 		_tprintf(TEXT("Mais uma alteração\n"));
